@@ -8,7 +8,8 @@ import {
   Post,
   Put,
   Body,
-  Delete
+  Delete,
+  Query
 } from '@nestjs/common';
 
 
@@ -18,8 +19,12 @@ export class TodoController {
   public constructor(private readonly todoService: TodoService) {}
 
   @Get()
-  public findAll(): Promise<TodoDto[]> {
-    return this.todoService.findAll();
+  public findAll(
+    @Query('title') title?: string,
+    @Query('completed') completed?: string,
+  ): Promise<TodoDto[]> {
+    const isCompleted = completed !== undefined ? completed === 'true' : undefined;
+    return this.todoService.findAll({ title, completed: isCompleted });
   }
 
   @Get(':id')
