@@ -1,6 +1,6 @@
 import { isNullOrUndefined } from 'util';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere, Like } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Todo } from '../../entities';
 import { TodoDto, AddTodoDto, EditTodoDto } from '../../dto';
@@ -12,10 +12,19 @@ export class TodoService {
   public constructor(
     @InjectRepository(Todo) private readonly todoRepository: Repository<Todo>,
     private readonly todoMapper: TodoMapperService
-  ) {}
+  ) { }
 
-  public async findAll(): Promise<TodoDto[]> {
-    const todos = await this.todoRepository.find();
+  public async findAll(filter?: { title?: string; completed?: boolean }): Promise<TodoDto[]> {
+    const where: FindOptionsWhere<Todo> = {};
+
+    if (filter?.title) {
+      where.title = filter.title ? Like(`%${filter.title}%`) : undefined; // Use ILIKE equivalent for case-insensitive search
+    }
+
+    if (filter?.completed !== undefined) {
+      where.completed = filter.completed;
+    }
+    const todos = await this.todoRepository.find({ where });
     return todos.map(this.todoMapper.modelToDto);
   }
 
